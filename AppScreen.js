@@ -42,6 +42,7 @@ _logout = () => {
     if(this.state.auth_type == 'google'){
       GoogleSignin.signOut().then(() => {
         console.log('google signout')
+        GoogleSignin.revokeAccess();
         firebase.auth().signOut();
       });
     } else if (this.state.auth_type == 'facebook') {
