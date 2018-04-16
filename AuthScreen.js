@@ -3,12 +3,15 @@ import {
   StyleSheet,
   Text,
   View,
-  Button
+  Button,
+  AsyncStorage
 } from 'react-native';
 
 import firebase from 'firebase';
 import fbsdk from 'react-native-fbsdk';
 const { LoginManager, AccessToken } = fbsdk;
+
+import { GoogleSignin } from 'react-native-google-signin';
 
 export default class AuthScreen extends Component {
 
@@ -18,6 +21,18 @@ export default class AuthScreen extends Component {
 
     _googleLogin = () => {
         console.log('google login')
+
+        GoogleSignin.configure({
+            iosClientId: '580643791568-tette3ckn2ukm5b8jq93vlc5ve70c6ke.apps.googleusercontent.com',
+        });
+        GoogleSignin.signIn().then(data => {
+            const credentials = firebase.auth.GoogleAuthProvider.credential(data.idToken, data.accessToken);
+            firebase.auth().signInAndRetrieveDataWithCredential(credentials).then(() => {
+                AsyncStorage.setItem('auth_type', 'google');
+            }).catch(error => {
+                console.log(error);
+            });
+        })
     }
 
     _facebookLogin = () => {
@@ -29,8 +44,13 @@ export default class AuthScreen extends Component {
                 console.log('Facebook Login Cancelled');
             } else {
                 AccessToken.getCurrentAccessToken().then(data => {
+                    console.log(data);
                     const credential = firebase.auth.FacebookAuthProvider.credential(data.accessToken);
-                    firebase.auth().signInAndRetrieveDataWithCredential(credential);
+                    firebase.auth().signInAndRetrieveDataWithCredential(credential).then(() => {
+                        AsyncStorage.setItem('auth_type', 'facebook');
+                    }).catch(error => {
+                        console.log(error);
+                    });
                 })
             }
         }, error => {

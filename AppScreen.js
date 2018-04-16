@@ -3,23 +3,53 @@ import {
   StyleSheet,
   Text,
   View,
-  Button
+  Button,
+  AsyncStorage
 } from 'react-native';
 
 import firebase from 'firebase';
 import fbsdk from 'react-native-fbsdk';
 const { LoginManager } = fbsdk;
 
+import { GoogleSignin } from 'react-native-google-signin';
+
 export default class AppScreen extends Component {
 
-componentDidMount() {
+  constructor(props){
+    super(props);
+
+    this.state = {
+      auth_type: ''
+    }
+  }
+
+  async getAuthType() {
+    await AsyncStorage.getItem('auth_type').then(value => {
+      this.setState({
+        auth_type: value
+      })
+    }).catch(error => {
+      console.log(error);
+    });
+  }
+
+  componentWillMount() {
     console.log(firebase.auth().currentUser);
-}
+    this.getAuthType();
+  }
 
 _logout = () => {
-    console.log('logout');
-    LoginManager.logOut();
-    firebase.auth().signOut();
+    if(this.state.auth_type == 'google'){
+      GoogleSignin.signOut().then(() => {
+        console.log('google signout')
+        firebase.auth().signOut();
+      });
+    } else if (this.state.auth_type == 'facebook') {
+      LoginManager.logOut().then(() => {
+        console.log('facebook signout')
+        firebase.auth().signOut();
+      });
+    }
 }
 
 render() {
@@ -33,7 +63,6 @@ render() {
       </View>
     );
   }
-
 }
 
 const styles = StyleSheet.create({
